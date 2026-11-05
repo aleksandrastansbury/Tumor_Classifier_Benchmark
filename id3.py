@@ -3,7 +3,7 @@
 # Adapted from: https://github.com/vidhikhatwani/Decision-Tree-ID3-Algorithm
 #
 # We could not use the repo directly without adaptation because
-#the repo is a single Jupyter notebook written for the 14-row "Play Tennis"
+# the repo is a single Jupyter notebook written for the 14-row "Play Tennis"
 # toy dataset, and its code is tied to that dataset in ways that break on ours:
 #   - It treats the label as the strings 'Yes'/'No'; our labels are 0/1
 #     (1 = malignant).
