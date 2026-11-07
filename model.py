@@ -10,6 +10,9 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+
 
 KNN_METRICS = ["euclidean", "manhattan", "chebyshev"]
 
@@ -33,6 +36,25 @@ def make_cart(k_features=None):
     return Pipeline(steps), {}
 
 #TODO : Aleks: SVM & Logistic Regression
+
+def make_svm(k_features=None):
+    """SVM finds a boundary using distances, so standardize first.
+    probability=True turns on probability outputs (predict_proba) so the cutoff
+    experiment can be applied. C and gamma are tuned; gamma only matters for rbf."""
+    steps = [("scale", StandardScaler())] + _selector(k_features) + \
+            [("clf", SVC(kernel="rbf", probability=True, random_state=0))]
+    grid = {"clf__C": [0.1, 1, 10, 100],
+            "clf__gamma": ["scale", 0.01, 0.001]}
+    return Pipeline(steps), grid
+ 
+def make_logreg(k_features=None):
+    """Logistic regression is a weighted sum of measurements turned into a probability.
+    Standardize so the weights are comparable and the solver converges.
+    C is the inverse regularization strength (smaller C = simpler model)."""
+    steps = [("scale", StandardScaler())] + _selector(k_features) + \
+            [("clf", LogisticRegression(max_iter=5000, random_state=0))]
+    grid = {"clf__C": [0.01, 0.1, 1, 10, 100]}
+    return Pipeline(steps), grid
 
 def tune(pipe, grid, X_train, y_train, verbose=False):
     """10-fold cross-validation on the training data only, selecting the best model using F1."""
