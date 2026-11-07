@@ -35,8 +35,6 @@ def make_cart(k_features=None):
     steps = _selector(k_features) + [("clf", DecisionTreeClassifier(random_state=0))]
     return Pipeline(steps), {}
 
-#TODO : Aleks: SVM & Logistic Regression
-
 def make_svm(k_features=None):
     """SVM finds a boundary using distances, so standardize first.
     probability=True turns on probability outputs (predict_proba) so the cutoff
