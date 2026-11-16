@@ -1,6 +1,8 @@
 #Author: Eleanor Krause
 #Last Edit Date: 11/5/2026
-from sklearn.metrics import (accuracy_score, precision_score, recall_score, f1_score, confusion_matrix)
+from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
+                             precision_score, recall_score)
+
 
 def model_eval(y_test, y_pred, metrics=None):
     """
@@ -10,7 +12,7 @@ def model_eval(y_test, y_pred, metrics=None):
     tn, fp, fn, tp = confusion_matrix(y_test, y_pred, labels=[0,1]).ravel()
 
     if metrics is None:
-        metrics = {"accuracy", "precision", "recall", "f1", "typeI(FP)", "typeII(FN)", "confusion matrix"}
+        metrics = {"accuracy", "precision", "recall", "f1", "typeI(FP)", "typeII(FN)", "confusion_matrix"}
     
     results = {}
 
@@ -33,6 +35,8 @@ def model_eval(y_test, y_pred, metrics=None):
         results["typeII(FN)"] = int(fn)
 
     if "confusion_matrix" in metrics:
-        results["confusion matrix"] = [[int(tn), int(fp)], [int(fn), int(tp)]]
+        results["confusion_matrix"] = [[int(tn), int(fp)], [int(fn), int(tp)]]
 
     return results
+
+print(model_eval([1, 1, 0, 0, 1], [1, 0, 0, 1, 1])) # jsut checking
