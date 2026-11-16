@@ -57,14 +57,12 @@ def analyze_exp2(path="results/exp2.csv"):
     plt.close()
     print("\nsaved chart: results/exp2_recall.png")
 
-
 def analyze_exp3(path="results/exp3.csv"):
     """TODO (Aleks): H3 """
     print("analyze_exp3: TODO")
 
-
 def analyze_exp4(path="results/exp4.csv"):
-    """TODO (Ella K): cutoffs """
+    """TODO (Ella G): cutoffs """
     print("analyze_exp4: TODO")
 
 if __name__ == "__main__":
