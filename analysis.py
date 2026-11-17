@@ -62,8 +62,52 @@ def analyze_exp3(path="results/exp3.csv"):
     print("analyze_exp3: TODO")
 
 def analyze_exp4(path="results/exp4.csv"):
-    """TODO (Ella G): cutoffs """
-    print("analyze_exp4: TODO")
+    """H4: lowering the probability cutoff should catch more malignant tumors (fewer FN)
+    but raise false alarms (more FP). Cutoffs 0.20-0.50 on KNN, SVM, logistic regression."""
+    df = pd.read_csv(path)
+    order = ["knn_euclidean", "knn_manhattan", "knn_chebyshev", "svm", "logreg"]
+
+    # 1) results table: mean and std over the 10 seeds, one row per model + cutoff
+    print("\n Experiment 4: mean and std over seeds, by model and cutoff")
+    print(df.groupby(["model", "cutoff"])[METRICS].agg(["mean", "std"]).round(3))
+
+    # 2) which cutoff cross-validation picked (count of seeds, out of 10)
+    print("\n cutoff chosen by cross-validation (number of seeds)")
+    chosen = df[df.selected == 1]
+    print(chosen.groupby(["model", "cutoff"]).size().unstack(fill_value=0))
+
+    # 3) test performance when each seed uses its own CV-chosen cutoff
+    print("\n test performance at the CV-chosen cutoff (mean over seeds)")
+    print(chosen.groupby("model")[METRICS].mean().round(3))
+
+    # 4) paired t-tests: cutoff 0.20 vs 0.50 on the same seed (same split)
+    def get(model, cutoff, col):
+        d = df[(df.model == model) & (df.cutoff == cutoff)].sort_values("seed")
+        return d[col].to_numpy()
+
+    print("\n paired t-tests, cutoff 0.20 vs 0.50 (positive t = 0.20 is higher, negative t = 0.20 is lower)")
+    for model in order:
+        for col in ["recall", "typeII(FN)", "typeI(FP)"]:
+            t, p = ttest_rel(get(model, 0.2, col), get(model, 0.5, col))
+            note = "significant (p < 0.05)" if p < 0.05 else "not significant"
+            print(f"{model:14s} {col:11s} t={t:6.2f}  p={p:.3f}  {note}")
+
+    # 5) chart: missed tumors (FN) and false alarms (FP) as the cutoff changes
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+    for ax, col, title in [(axes[0], "typeII(FN)", "Missed malignant tumors (FN)"),
+                           (axes[1], "typeI(FP)", "False alarms (FP)")]:
+        for model in order:
+            m = df[df.model == model].groupby("cutoff")[col].mean()
+            ax.plot(m.index, m.values, marker="o", label=model)
+        ax.set_title(title)
+        ax.set_xlabel("probability cutoff")
+        ax.set_ylabel("average count per test set")
+        ax.set_xticks([0.2, 0.3, 0.4, 0.5])
+    axes[0].legend(fontsize=8)
+    plt.tight_layout()
+    plt.savefig("results/exp4_tradeoff.png", dpi=150, bbox_inches="tight")
+    plt.close()
+    print("\nsaved chart: results/exp4_tradeoff.png")
 
 if __name__ == "__main__":
     analyze_exp1()
