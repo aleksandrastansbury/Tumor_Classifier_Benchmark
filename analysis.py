@@ -64,8 +64,8 @@ def analyze_exp3(path="results/exp3.csv"):
 def analyze_exp4(path="results/exp4.csv"):
     """H4: lowering the probability cutoff should catch more malignant tumors (fewer FN)
     but raise false alarms (more FP). Cutoffs 0.20-0.50 on KNN, SVM, logistic regression."""
-    df = pd.read_csv(path)
-    order = ["knn_euclidean", "knn_manhattan", "knn_chebyshev", "svm", "logreg"]
+    df = pd.read_csv(path) # load csv file made by run_exp4
+    order = ["knn_euclidean", "knn_manhattan", "knn_chebyshev", "svm", "logreg"] # fixed model order so tables, tests, and chart legend line up
 
     # 1) results table: mean and std over the 10 seeds, one row per model + cutoff
     print("\n Experiment 4: mean and std over seeds, by model and cutoff")
