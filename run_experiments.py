@@ -49,47 +49,52 @@ def run_exp2(n_seeds=N_SEEDS):
 # TODO: Aleks; Experiment 3 (unpruned trees, H3)
 
 # TODO: Ella G; Experiment 4 (cutoffs)
-CUTOFFS = [0.20, 0.30, 0.40, 0.50]
-CUTOFF_BETA = 2  # F2 weights recall 2x as much as precision (a missed tumor costs more than a false alarm)
+CUTOFFS = [0.20, 0.30, 0.40, 0.50] 
+CUTOFF_BETA = 2  # F2 weights recall 2x as much as precision (a missed tumor have a larger affect compared to a false alarm)
 
 def pick_cutoff(model, X_train, y_train, seed):
-    """Choose a cutoff using 10-fold CV on the TRAINING data only (test set never touched).
+    """Choose a cutoff using 10-fold CV on the training data only (test set never touched).
     Cross_val_predict refits a clone of the tuned pipeline on 9 folds and predicts the 10th,
     so every training tumor gets an out-of-fold probability. We score each cutoff on those
     and keep the best F2. Ties go to the higher cutoff (fewer false alarms)."""
-    cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
+    cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed) # splitting training data into 10 groups/folds
     p_oof = cross_val_predict(model, X_train, y_train, cv=cv, method="predict_proba")[:, 1]
-    best_cutoff, best_f = None, -1.0
-    for c in sorted(CUTOFFS, reverse=True):  
+    best_cutoff, best_f = None, -1.0  # trying each cutoff and tracking the best so far
+    for c in sorted(CUTOFFS, reverse=True):  # sorting from highest cutoff to lowest. 
         f = fbeta_score(y_train, (p_oof >= c).astype(int), beta=CUTOFF_BETA, zero_division=0)
         if f > best_f:
             best_cutoff, best_f = c, f
-    return best_cutoff, best_f
+    return best_cutoff, best_f # returning best cutoff and its F2 score on the training data
 
 
 def run_exp4(n_seeds=N_SEEDS):
     """Tune each model once, then turn its probabilities into labels at every cutoff.
     All cutoffs are reported on the test set; `selected` = 1 marks the one CV chose."""
-    rows = []
-    for seed in range(n_seeds):
+    rows = [] # each row becomes one line in results/exp4.csv
+    for seed in range(n_seeds): # repeats everything for seeds 0-9. a seed gives a different train/test split, avergraging over the seeds.
         X_train, X_test, y_train, y_test = get_split(seed)
 
+        # comparing the 5 models: each make_ returns (pipline, grid): pipeline is the model; the grid lists settings to try during tuning.
         models = {f"knn_{m}": make_knn(m) for m in KNN_METRICS}
         models["svm"] = make_svm()
         models["logreg"] = make_logreg()
 
         for name, (pipe, grid) in models.items():
+            # finding the best model setting using training data. done once, cutoffs reuse the same fitted model. 
             model = tune(pipe, grid, X_train, y_train)      # hyperparameters: training data only
-            chosen, cv_f2 = pick_cutoff(model, X_train, y_train, seed)
+            chosen, cv_f2 = pick_cutoff(model, X_train, y_train, seed) # choose a cutoff using only training data 
+           # get each test tumor's probability of being malignant. 
             p_test = model.predict_proba(X_test)[:, 1]      # P(malignant); label 1 = malignant
 
-            for c in CUTOFFS:
+            for c in CUTOFFS: # apply every cutoff to same probabilities and score it. 
+                # true (malignant) when probability >= cutoff, then convert to 1/0
                 y_pred = (p_test >= c).astype(int)
                 row = {"experiment": 4, "model": name, "setting": f"cutoff{c:.2f}",
-                       "seed": seed, "cutoff": c, "selected": int(c == chosen),
-                       "chosen_cutoff_cv_f2": round(cv_f2, 4)}
-                row.update(score(y_test, y_pred))
+                       "seed": seed, "cutoff": c, "selected": int(c == chosen), # selected = 1 only on the row whose cutoff CV picked 
+                       "chosen_cutoff_cv_f2": round(cv_f2, 4)} # training-data F2 score of the chosen cutoff 
+                row.update(score(y_test, y_pred)) # adds accuracy, precision, F1, False positives, false negatives, recall, and confusion matrix counts to this row. 
                 rows.append(row)
+    # 5 models * 4 cutoffs * 10 seeds = 200 rows written to the CSV
     save(rows, "results/exp4.csv")
 
 
