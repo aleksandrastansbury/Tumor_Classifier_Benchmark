@@ -14,7 +14,10 @@ from data import N_SEEDS, get_split
 from metrics import model_eval
 from sklearn.metrics import fbeta_score
 from sklearn.model_selection import StratifiedKFold, cross_val_predict
-from model import KNN_METRICS, make_knn, make_logreg, make_svm, tune
+from model import KNN_METRICS, make_knn, make_logreg, make_svm, tune, make_cart
+from experiment1 import rank_features, select_features
+
+
 
 def score(y_true, y_pred):
     """Run model_eval and flatten the confusion matrix into tn, fp, fn, tp columns."""
@@ -30,7 +33,36 @@ def save(rows, path):
         w.writeheader()
         w.writerows(rows)
         
-#TODO : Ella K; Experiment 1 (feature count, H1)
+#Experiment 1
+def run_exp1(n_seeds = N_SEEDS):
+    rows = []
+    count_options = [5, 10, 15, 30]
+    for seed in range(n_seeds):
+        X_train, X_test, y_train, y_test = get_split(seed)
+        for num_features in count_options:
+            if num_features != 30:
+                num = num_features
+            else:
+                num = None
+            model_types = {}
+            for metric in KNN_METRICS:
+                model_types["KNN " + metric] = make_knn(metric, k_features=num)
+            model_types["CART"] = make_cart(k_features = num)
+            model_types["SVM"] = make_svm(k_features = num)
+            model_types["Logistic Regression"] = make_logreg(k_features = num)
+            for name in model_types:
+                pipe, grid = model_types[name]
+                model = tune(pipe, grid, X_train, y_train)
+                predictions = model.predict(X_test)
+                results = score(y_test, predictions)
+                row = {"experiment": 1,
+                       "model": name,
+                       "setting": num_features,
+                       "seed": seed}
+                row.update(results)
+                rows.append(row)
+
+                save(rows, "results/exp1.csv")
 
 def run_exp2(n_seeds=N_SEEDS):
     """H2: three KNN distances on the same splits, neighbors tuned the same way."""
@@ -99,7 +131,7 @@ def run_exp4(n_seeds=N_SEEDS):
 
 
 EXPERIMENTS = {
-#   "1": run_exp1,   
+   "1": run_exp1,   
     "2": run_exp2,   
 #   "3": run_exp3,   
     "4": run_exp4,
