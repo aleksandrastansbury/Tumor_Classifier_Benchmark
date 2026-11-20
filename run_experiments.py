@@ -4,19 +4,20 @@ Exp 1 (H1) feature count: top 5, 10, 15, all 30 by ANOVA F-score
 Exp 2 (H2) KNN distances: euclidean, manhattan, chebyshev
 Exp 3 (H3) unpruned trees: ID3, C4.5, CART 
 Exp 4 probability cutoffs: 0.20 to 0.50 
-Plz Use get_split() from data.py, models from model.py, and model_eval from metrics.py !!!!!!
 """
 import csv
 import os
 import sys
+import warnings
+
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+from sklearn.metrics import fbeta_score
+from sklearn.model_selection import StratifiedKFold, cross_val_predict
 
 from data import N_SEEDS, get_split
 from metrics import model_eval
-from sklearn.metrics import fbeta_score
-from sklearn.model_selection import StratifiedKFold, cross_val_predict
-from model import KNN_METRICS, make_knn, make_logreg, make_svm, tune, make_cart
-from experiment1 import rank_features, select_features
-
+from model import KNN_METRICS, make_cart, make_knn, make_logreg, make_svm, tune
 
 
 def score(y_true, y_pred):
@@ -62,8 +63,9 @@ def run_exp1(n_seeds = N_SEEDS):
                 row.update(results)
                 rows.append(row)
 
-                save(rows, "results/exp1.csv")
-
+    save(rows, "results/exp1.csv")
+    
+#Experiment 2
 def run_exp2(n_seeds=N_SEEDS):
     """H2: three KNN distances on the same splits, neighbors tuned the same way."""
     rows = []
@@ -80,7 +82,7 @@ def run_exp2(n_seeds=N_SEEDS):
 
 # TODO: Aleks; Experiment 3 (unpruned trees, H3)
 
-# TODO: Ella G; Experiment 4 (cutoffs)
+# Experiment 4 
 CUTOFFS = [0.20, 0.30, 0.40, 0.50] 
 CUTOFF_BETA = 2  # F2 weights recall 2x as much as precision (a missed tumor have a larger affect compared to a false alarm)
 
@@ -92,18 +94,17 @@ def pick_cutoff(model, X_train, y_train, seed):
     cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed) # splitting training data into 10 groups/folds
     p_oof = cross_val_predict(model, X_train, y_train, cv=cv, method="predict_proba")[:, 1]
     best_cutoff, best_f = None, -1.0  # trying each cutoff and tracking the best so far
-    for c in sorted(CUTOFFS, reverse=True):  # sorting from highest cutoff to lowest. 
+    for c in sorted(CUTOFFS, reverse=True):  # sorting from highest cutoff to lowest
         f = fbeta_score(y_train, (p_oof >= c).astype(int), beta=CUTOFF_BETA, zero_division=0)
         if f > best_f:
             best_cutoff, best_f = c, f
     return best_cutoff, best_f # returning best cutoff and its F2 score on the training data
 
-
 def run_exp4(n_seeds=N_SEEDS):
     """Tune each model once, then turn its probabilities into labels at every cutoff.
     All cutoffs are reported on the test set; `selected` = 1 marks the one CV chose."""
-    rows = [] # each row becomes one line in results/exp4.csv
-    for seed in range(n_seeds): # repeats everything for seeds 0-9. a seed gives a different train/test split, avergraging over the seeds.
+    rows = [] 
+    for seed in range(n_seeds): 
         X_train, X_test, y_train, y_test = get_split(seed)
 
         # comparing the 5 models: each make_ returns (pipline, grid): pipeline is the model; the grid lists settings to try during tuning.
@@ -129,9 +130,8 @@ def run_exp4(n_seeds=N_SEEDS):
     # 5 models * 4 cutoffs * 10 seeds = 200 rows written to the CSV
     save(rows, "results/exp4.csv")
 
-
 EXPERIMENTS = {
-   "1": run_exp1,   
+    "1": run_exp1,   
     "2": run_exp2,   
 #   "3": run_exp3,   
     "4": run_exp4,
