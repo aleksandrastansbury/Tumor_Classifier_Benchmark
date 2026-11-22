@@ -204,8 +204,10 @@ def analyze_exp4(path="results/exp4.csv"):
     order = ["knn_euclidean", "knn_manhattan", "knn_chebyshev", "svm", "logreg"] # fixed model order so tables, tests, and chart legend line up
 
     # results table: mean and std over the 10 seeds, one row per model + cutoff
+    summary = df.groupby(["model", "cutoff"])[METRICS].agg(["mean", "std"]).round(3)
     print("\n Experiment 4: mean and std over seeds, by model and cutoff")
-    print(df.groupby(["model", "cutoff"])[METRICS].agg(["mean", "std"]).round(3))
+    print(summary)
+    summary.to_csv("results/exp4_summary.csv")
 
     # which cutoff cross-validation picked (count of seeds, out of 10)
     print("\n cutoff chosen by cross-validation (number of seeds)")
@@ -228,7 +230,7 @@ def analyze_exp4(path="results/exp4.csv"):
             note = "significant (p < 0.05)" if p < 0.05 else "not significant"
             print(f"{model:14s} {col:11s} t={t:6.2f}  p={p:.3f}  {note}")
 
-    # 5) chart: missed tumors (FN) and false alarms (FP) as the cutoff changes
+    # chart: missed tumors (FN) and false alarms (FP) as the cutoff changes
     fig, axes = plt.subplots(1, 2, figsize=(10, 4))
     for ax, col, title in [(axes[0], "typeII(FN)", "Missed malignant tumors (FN)"),
                            (axes[1], "typeI(FP)", "False alarms (FP)")]:
