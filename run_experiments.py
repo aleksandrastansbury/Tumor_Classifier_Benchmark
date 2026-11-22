@@ -12,14 +12,15 @@ import warnings
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-from sklearn.metrics import fbeta_score, accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, fbeta_score
 from sklearn.model_selection import StratifiedKFold, cross_val_predict
 
+from c45 import C45Classifier
 from data import N_SEEDS, get_split
+from id3 import ID3Classifier
 from metrics import model_eval
 from model import KNN_METRICS, make_cart, make_knn, make_logreg, make_svm, tune
-from c45 import C45Classifier
-from id3 import ID3Classifier
+
 
 def score(y_true, y_pred):
     """Run model_eval and flatten the confusion matrix into tn, fp, fn, tp columns."""
@@ -167,7 +168,7 @@ def run_exp4(n_seeds=N_SEEDS):
             # finding the best model setting using training data. done once, cutoffs reuse the same fitted model. 
             model = tune(pipe, grid, X_train, y_train)      # hyperparameters: training data only
             chosen, cv_f2 = pick_cutoff(model, X_train, y_train, seed) # choose a cutoff using only training data 
-           # get each test tumor's probability of being malignant. 
+            # get each test tumor's probability of being malignant. 
             p_test = model.predict_proba(X_test)[:, 1]      # P(malignant); label 1 = malignant
 
             for c in CUTOFFS: # apply every cutoff to same probabilities and score it. 
@@ -184,7 +185,7 @@ def run_exp4(n_seeds=N_SEEDS):
 EXPERIMENTS = {
     "1": run_exp1,   
     "2": run_exp2,   
-#   "3": run_exp3,   
+    "3": run_exp3,   
     "4": run_exp4,
 }
 
