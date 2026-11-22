@@ -12,13 +12,14 @@ import warnings
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-from sklearn.metrics import fbeta_score
+from sklearn.metrics import fbeta_score, accuracy_score, f1_score
 from sklearn.model_selection import StratifiedKFold, cross_val_predict
 
 from data import N_SEEDS, get_split
 from metrics import model_eval
 from model import KNN_METRICS, make_cart, make_knn, make_logreg, make_svm, tune
-
+from c45 import C45Classifier
+from id3 import ID3Classifier
 
 def score(y_true, y_pred):
     """Run model_eval and flatten the confusion matrix into tn, fp, fn, tp columns."""
@@ -80,7 +81,57 @@ def run_exp2(n_seeds=N_SEEDS):
             rows.append(row)
     save(rows, "results/exp2.csv")
 
-# TODO: Aleks; Experiment 3 (unpruned trees, H3)
+ID3_BIN_OPTIONS = [3, 5, 10] # ID3 needs binned measurements; the number of bins is chosen by CV
+
+def pick_id3_bins(X_train, y_train, seed):
+    """Choose ID3's number of bins with 10-fold CV on the training data only (scored on F1).
+    Ties go to fewer bins (simpler tree)."""
+    cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
+    best_bins, best_f1 = None, -1.0
+    for n_bins in ID3_BIN_OPTIONS:
+        f1s = []
+        for fit_idx, val_idx in cv.split(X_train, y_train):
+            m = ID3Classifier(n_bins=n_bins).fit(X_train[fit_idx], y_train[fit_idx])
+            f1s.append(f1_score(y_train[val_idx], m.predict(X_train[val_idx]), zero_division=0))
+        mean_f1 = sum(f1s) / len(f1s)
+        if mean_f1 > best_f1 + 1e-12:
+            best_bins, best_f1 = n_bins, mean_f1
+    return best_bins
+
+# Experiment 3 (unpruned trees, H3)
+def run_exp3(n_seeds=N_SEEDS):
+    """H3: unpruned ID3, C4.5 and CART on the same splits. All three grow until the leaves are
+    pure, so pruning does not affect the comparison. We record tree size and the train/test gap
+    to see which design overfits most."""
+    rows = []
+    for seed in range(n_seeds):
+        X_train, X_test, y_train, y_test = get_split(seed)
+
+        n_bins = pick_id3_bins(X_train, y_train, seed)
+        cart_pipe, cart_grid = make_cart() # empty grid, so tune() just fits the unpruned tree
+        trees = {
+            "ID3": ID3Classifier(n_bins=n_bins).fit(X_train, y_train),
+            "C4.5": C45Classifier().fit(X_train, y_train),
+            "CART": tune(cart_pipe, cart_grid, X_train, y_train),
+        }
+
+        for name, model in trees.items():
+            if name == "CART":
+                tree = model.named_steps["clf"]
+                nodes, depth = tree.tree_.node_count, tree.get_depth()
+            else:
+                nodes, depth = model.size()
+            train_acc = accuracy_score(y_train, model.predict(X_train))
+            y_pred = model.predict(X_test)
+            test_acc = accuracy_score(y_test, y_pred)
+            row = {"experiment": 3, "model": name, "setting": "unpruned", "seed": seed,
+                   "n_bins": n_bins if name == "ID3" else "",
+                   "nodes": nodes, "depth": depth,
+                   "train_accuracy": round(train_acc, 4),
+                   "train_test_gap": round(train_acc - test_acc, 4)}
+            row.update(score(y_test, y_pred))
+            rows.append(row)
+    save(rows, "results/exp3.csv")
 
 # Experiment 4 
 CUTOFFS = [0.20, 0.30, 0.40, 0.50] 
