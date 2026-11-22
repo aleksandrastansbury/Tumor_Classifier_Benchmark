@@ -126,8 +126,76 @@ def analyze_exp2(path="results/exp2.csv"):
     plt.close()
 
 def analyze_exp3(path="results/exp3.csv"):
-    """TODO (Aleks): H3 """
-    print("analyze_exp3: TODO")
+    """H3: unpruned C4.5 and CART should reach test recall and accuracy at least as high as unpruned ID3.
+    Also compares tree size and the train-test gap to see which design overfits most."""
+    df = pd.read_csv(path)
+    order = ["ID3", "C4.5", "CART"] # fixed model order for tables, tests and charts
+    tree_cols = ["nodes", "depth", "train_accuracy", "train_test_gap"]
+
+    # results table: mean and std over the 10 seeds
+    print("\n Experiment 3: mean and std over seeds")
+    summary = df.groupby("model")[METRICS + tree_cols].agg(["mean", "std"]).round(3).loc[order]
+    print(summary)
+    summary.to_csv("results/exp3_summary.csv")
+
+    # how many bins ID3 chose in each seed (chosen by CV on the training data)
+    print("\n ID3 bins chosen by cross-validation (number of seeds)")
+    print(df[df.model == "ID3"]["n_bins"].astype(int).value_counts().sort_index())
+
+    # average confusion matrix per tree design
+    cm = df.groupby("model")[["tn", "fp", "fn", "tp"]].mean().round(1).loc[order]
+    print("\n average confusion matrix counts per tree design")
+    print(cm)
+    cm.to_csv("results/exp3_confusion.csv")
+
+    # paired t-tests: same seed = same split, so rows are paired by seed
+    def get(model, col):
+        return df[df.model == model].sort_values("seed")[col].to_numpy()
+
+    pairs = [("C4.5", "ID3"), ("CART", "ID3"), ("CART", "C4.5")]
+    print("\n paired t-tests (positive t = first tree is higher, negative t = first tree is lower)")
+    print(" H3 compares C4.5 vs ID3 and CART vs ID3 on accuracy and recall")
+    for a, b in pairs:
+        for col in ["accuracy", "recall", "f1", "nodes", "train_test_gap"]:
+            diff = get(a, col).mean() - get(b, col).mean()
+            t, p = ttest_rel(get(a, col), get(b, col))
+            note = "significant (p < 0.05)" if p < 0.05 else "not significant"
+            print(f"{a:5s} vs {b:5s} {col:15s} mean diff={diff:+7.3f}  t={t:6.2f}  p={p:.3f}  {note}")
+
+    # chart: malignant recall and accuracy per tree design over the seeds
+    fig, axes = plt.subplots(1, 2, figsize=(9, 4))
+    for ax, col in zip(axes, ["recall", "accuracy"]):
+        ax.boxplot([get(m, col) for m in order], tick_labels=order)
+        ax.set_title(f"Test {col} (10 seeds)")
+        ax.set_ylabel(col)
+    plt.suptitle("Experiment 3: unpruned trees")
+    plt.tight_layout()
+    plt.savefig("results/exp3_recall_accuracy.png", dpi=150, bbox_inches="tight")
+    plt.close()
+
+    # chart: missed malignant tumors (FN) and false alarms (FP) per tree design
+    fig, axes = plt.subplots(1, 2, figsize=(9, 4))
+    for ax, col, title in [(axes[0], "typeII(FN)", "Missed malignant tumors (FN)"),
+                           (axes[1], "typeI(FP)", "False alarms (FP)")]:
+        s = df.groupby("model")[col].agg(["mean", "std"]).loc[order]
+        ax.bar(order, s["mean"], yerr=s["std"], capsize=4)
+        ax.set_title(title)
+        ax.set_ylabel("average count per test set (mean ± std)")
+    plt.tight_layout()
+    plt.savefig("results/exp3_errors.png", dpi=150, bbox_inches="tight")
+    plt.close()
+
+    # chart: tree size and train-test gap (which design overfits most)
+    fig, axes = plt.subplots(1, 2, figsize=(9, 4))
+    for ax, col, title in [(axes[0], "nodes", "Tree size (nodes)"),
+                           (axes[1], "train_test_gap", "Train accuracy minus test accuracy")]:
+        s = df.groupby("model")[col].agg(["mean", "std"]).loc[order]
+        ax.bar(order, s["mean"], yerr=s["std"], capsize=4)
+        ax.set_title(title)
+    plt.tight_layout()
+    plt.savefig("results/exp3_size_gap.png", dpi=150, bbox_inches="tight")
+    plt.close()
+    print("\nsaved charts: results/exp3_recall_accuracy.png, exp3_errors.png, exp3_size_gap.png")
 
 def analyze_exp4(path="results/exp4.csv"):
     """ lowering the probability cutoff should catch more malignant tumors (fewer FN)
