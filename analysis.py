@@ -124,6 +124,7 @@ def analyze_exp2(path="results/exp2.csv"):
     plt.xticks(rotation=0)
     plt.savefig("results/exp2_missed.png", dpi=150, bbox_inches="tight")
     plt.close()
+    print("\nsaved chart: results/exp2_missed.png")
 
 def analyze_exp3(path="results/exp3.csv"):
     """H3: unpruned C4.5 and CART should reach test recall and accuracy at least as high as unpruned ID3.
