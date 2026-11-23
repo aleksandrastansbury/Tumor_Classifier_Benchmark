@@ -26,7 +26,7 @@ All experiments use an 80/20 train/test split, 10-fold cross-validation on the t
 ## Setup
 
 ```bash
-pip install -r requirements.txt
+pip install scikit-learn numpy scipy pandas matplotlib
 ```
 
 Requirements: scikit-learn, numpy, scipy, pandas, matplotlib.
