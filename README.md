@@ -56,6 +56,8 @@ Run the experiments before the analysis, because `analysis.py` reads the CSV fil
 | `analysis.py` | Tables, paired t-tests, and charts |
 | `results/` | CSVs and charts made by the experiments (not in Git) |
 
+**Note:** `experiment1.py`, `experiment1_visuals.py`, `run_id3.py`, and the `testing/` folder are early working files, kept for reference. The final results come from `run_experiments.py` and `analysis.py`.
+
 ## How the code works
 
 - Every model function in `model.py` returns `(pipeline, grid)`. Scaling and ANOVA F-score feature selection are included in the model pipelines. Feature selection is applied when selecting the top 5, 10, or 15 features; all 30 features are used in the 30-feature setting. These steps are fitted on training data only.
