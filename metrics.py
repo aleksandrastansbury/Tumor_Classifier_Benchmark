@@ -1,5 +1,6 @@
-#Author: Eleanor Krause
-#Last Edit Date: 11/5/2026
+"""
+metrics.py: Provides functions to evaluate classification model performance.
+"""
 from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
                              precision_score, recall_score)
 
@@ -17,10 +18,10 @@ def model_eval(y_test, y_pred, metrics=None):
     results = {}
 
     if "accuracy" in metrics:
-     results["accuracy"] = accuracy_score(y_test, y_pred)
+        results["accuracy"] = accuracy_score(y_test, y_pred)
 
     if "precision" in metrics:
-       results["precision"] = precision_score(y_test, y_pred)
+        results["precision"] = precision_score(y_test, y_pred)
 
     if "recall" in metrics:
         results["recall"] = recall_score(y_test, y_pred)
@@ -39,4 +40,6 @@ def model_eval(y_test, y_pred, metrics=None):
 
     return results
 
-print(model_eval([1, 1, 0, 0, 1], [1, 0, 0, 1, 1])) # jsut checking
+if __name__ == "__main__":
+    # Quick test using sample actual and predicted labels.
+    print(model_eval([1, 1, 0, 0, 1], [1, 0, 0, 1, 1]))

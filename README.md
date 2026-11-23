@@ -71,6 +71,6 @@ Run the experiments before the analysis, because `analysis.py` reads the CSV fil
 
 ## Credits
 
-- Data and models: scikit-learn (`load_breast_cancer`, [documentation](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_breast_cancer.html))
+- Data: scikit-learn (`load_breast_cancer`, [documentation](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_breast_cancer.html))
 - ID3: Adapted from [Decision-Tree-ID3-Algorithm](https://github.com/vidhikhatwani/Decision-Tree-ID3-Algorithm)
 - C4.5: Adapted from [C4.5](https://github.com/Valdecy/C4.5)
