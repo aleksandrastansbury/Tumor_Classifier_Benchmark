@@ -26,7 +26,7 @@ All experiments use an 80/20 train/test split, 10-fold cross-validation on the t
 ## Setup
 
 ```bash
-pip install -r requirements.txt
+pip install scikit-learn numpy scipy pandas matplotlib
 ```
 
 Requirements: scikit-learn, numpy, scipy, pandas, matplotlib.
@@ -55,6 +55,8 @@ Run the experiments before the analysis, because `analysis.py` reads the CSV fil
 | `run_experiments.py` | Runs the experiments and saves one CSV each |
 | `analysis.py` | Tables, paired t-tests, and charts |
 | `results/` | CSVs and charts made by the experiments (not in Git) |
+
+**Note:** `experiment1.py`, `experiment1_visuals.py`, `run_id3.py`, and the `testing/` folder are early working files, kept for reference. The final results come from `run_experiments.py` and `analysis.py`.
 
 ## How the code works
 
