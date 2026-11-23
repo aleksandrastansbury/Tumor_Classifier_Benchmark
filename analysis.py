@@ -54,7 +54,7 @@ def analyze_exp1(path="results/exp1.csv"):
     print(summary)
     summary.to_csv("results/exp1_summary.csv")
 
-     # average confusion matrix counts per model and feature count
+    # average confusion matrix counts per model and feature count
     cm = df.groupby(["model", "setting"])[["tn", "fp", "fn", "tp"]].mean().round(1)
     print("\n average confusion matrix counts per model and feature count")
     print(cm)

@@ -27,7 +27,7 @@ if __name__ == "__main__":
     print(np.bincount(y))            # [357 212] ; after flip: label 1 has 212
     print(X.shape, "malignant:", int(y.sum()), "benign:", int((1 - y).sum()))
 
-# Why I flip the labels (Uncomment if you wanna test how flip works)
+# Why we flip the labels (Uncomment if you wanna test how flip works)
 """
 from sklearn.metrics import recall_score
 y_true = [0, 0, 0, 1, 1, 1, 1, 1, 1, 1]   # original labels: 0 = malignant (3 tumors)
